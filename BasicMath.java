@@ -1,7 +1,7 @@
 /**
  * A tool to help children practice basic mathematical operations
  * @author Alexander Shmakov
- * @version 1.0
+ * @version 2.0
  */
 
 import java.util.*;
@@ -11,10 +11,14 @@ import javax.swing.*;
 import javax.swing.border.*;
 import java.io.PrintStream;
 
-public class BasicMath
-{
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+
+public class BasicMath {
+	
 	private final int RANGE = 10;
-	private final String[] signs = { "\u002B", "\u2212"};
+	private final String[] signs = { "+", "-", "*", "/" };
 	private JFrame frame;
 	private JButton checkButton;
 	private JButton restart;
@@ -33,65 +37,52 @@ public class BasicMath
 	private String[] message;
 	private String question;
 	
-	public BasicMath()
-	{
+	public BasicMath() {
 		this.frame = new JFrame("Basic Math");
 		this.frame.setPreferredSize(new Dimension(400, 400));
 		this.frame.setDefaultCloseOperation(3);
 		
 		this.restart = new JButton("restart");
-		this.restart.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent paramAnonymousActionEvent)
-			{
-				BasicMath.this.first = BasicMath.this.newNums(BasicMath.this.rand, 10);
-				BasicMath.this.second = BasicMath.this.newNums(BasicMath.this.rand, 10);
-				System.out.println("new first = " + BasicMath.this.first + " new second = " + BasicMath.this.second);
-				BasicMath.this.question = BasicMath.this.makeQuestion(BasicMath.this.first, BasicMath.this.second);
+		this.restart.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent paramAnonymousActionEvent) {
+				BasicMath.this.question = makeQuestion();
+				System.out.println("new first= " + BasicMath.this.first + " new second = " + BasicMath.this.second);
 				BasicMath.this.questionDisplay.setText(BasicMath.this.question);
 				BasicMath.this.messageDisplay.setText("");
 				BasicMath.this.answerField.setText("");
 			}
 		});
-		this.checkButton = new JButton("check answer");
-		this.checkButton.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent paramAnonymousActionEvent)
-			{
-				System.out.println("what we get after result(ansField)= " + BasicMath.this.result(BasicMath.this.question));
-				if (BasicMath.this.filter(BasicMath.this.answerField.getText()))
-				{
+		this.checkButton = new JButton("Check Answer");
+		this.checkButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent paramAnonymousActionEvent) {
+
+				if (BasicMath.this.filter(BasicMath.this.answerField.getText())) {
 					BasicMath.this.messageDisplay.setText(BasicMath.this.message[2]);
 				}
-				else if (BasicMath.this.result(BasicMath.this.question) == Integer.parseInt(BasicMath.this.answerField.getText()))
-				{
+				else if (BasicMath.this.result(BasicMath.this.question) == Integer.parseInt(BasicMath.this.answerField.getText())) {
+					System.out.println("what we get after result(ansField)= " + BasicMath.this.result(BasicMath.this.question));
 					BasicMath.this.messageDisplay.setText(BasicMath.this.message[0]);
-					BasicMath.this.first = BasicMath.this.newNums(BasicMath.this.rand, 10);
-					BasicMath.this.second = BasicMath.this.newNums(BasicMath.this.rand, 10);
+					BasicMath.this.question = makeQuestion();
 					System.out.println("new first= " + BasicMath.this.first + " new second = " + BasicMath.this.second);
-					BasicMath.this.question = BasicMath.this.makeQuestion(BasicMath.this.first, BasicMath.this.second);
 					BasicMath.this.questionDisplay.setText(BasicMath.this.question);
 				}
-				else if (BasicMath.this.result(BasicMath.this.question) != Integer.parseInt(BasicMath.this.answerField.getText()))
-				{
+				else if (BasicMath.this.result(BasicMath.this.question) != Integer.parseInt(BasicMath.this.answerField.getText())) {
+					System.out.println("what we get after result(ansField)= " + BasicMath.this.result(BasicMath.this.question));
 					BasicMath.this.messageDisplay.setText(BasicMath.this.message[1]);
 				}
-				else
-				{
+				else {
 					BasicMath.this.messageDisplay.setText(BasicMath.this.message[2]);
 				}
 				BasicMath.this.answerField.setText("");
 			}
 		});
+
 		this.rand = new Random();
-		this.first = newNums(this.rand, 10);
-		this.second = newNums(this.rand, 10);
-		this.question = makeQuestion(this.first, this.second);
-		
+		this.question = makeQuestion();
+		System.out.println("new first= " + BasicMath.this.first + " new second = " + BasicMath.this.second);
 		this.allPanels = new JPanel(new GridLayout(3, 1));
 		
 		this.display = new JPanel();
-		this.question = makeQuestion(this.first, this.second);
 		this.questionDisplay = new JLabel(this.question);
 		this.questionDisplay.setForeground(Color.RED);
 		this.questionDisplay.setFont(this.questionDisplay.getFont().deriveFont(64.0F));
@@ -128,60 +119,102 @@ public class BasicMath
 		this.frame.setVisible(true);
 	}
 	
-	public static void main(String[] args)
-	{
-		SwingUtilities.invokeLater(new Runnable()
-		{
-			public void run()
-			{
+	public static void main(String[] args) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
 				new BasicMath();
 			}
 		});
 	}
 	
-	public int newNums(Random paramRandom, int paramInt)
-	{
-		return paramRandom.nextInt(paramInt);
+	public int randSign() {
+		return this.rand.nextInt(this.signs.length);
 	}
-	
-	public String makeQuestion(int paramInt1, int paramInt2)
-	{
-		return "" + paramInt1 + " " + randSign(paramInt1, paramInt2) + " " + paramInt2;
+
+	public int randNum() {
+		return this.rand.nextInt(this.RANGE + 1);
 	}
-	
-	public char randSign(int paramInt1, int paramInt2)
-	{
-		if (paramInt1 < paramInt2) {
-			return this.signs[0].charAt(0);
+
+	public int getMax(int a, int b) {
+		return (a>b ? a:b);
+	}
+
+	public int getMin(int a, int b) {
+		return (a>b ? b:a);
+	}
+
+	public String makeQuestion() {
+		this.first = randNum();
+		this.second = randNum();
+		int signIdx = randSign();
+		double temp = 0;
+
+		switch(signIdx) {
+			
+			case 0:
+				return "" + this.first + " " + this.signs[signIdx].charAt(0) + " " + this.second;
+
+			case 1:
+				return "" + getMax(this.first, this.second) + " " + this.signs[signIdx].charAt(0) + " " + getMin(this.first, this.second);
+
+			case 2:
+				do {
+					this.first = randNum();
+					this.second = randNum();
+					temp = this.first * this.second;
+				} while (temp > this.RANGE);
+				return "" + this.first + " " + this.signs[signIdx].charAt(0) + " " + this.second;
+
+			case 3:
+				do {
+					this.first = randNum();
+					this.second = randNum();
+					if(this.second == 0) {
+						continue;
+					}
+					temp = (double)this.first / this.second;
+				} while (temp % 1.0 > 0.0);
+				return "" + this.first + " " + this.signs[signIdx].charAt(0) + " " + this.second;
 		}
-		return this.signs[1].charAt(0);
+		return "";
 	}
 	
-	public int result(String paramString)
-	{
-		String str = paramString.replace(" ", "");
-		System.out.println("temp = " + str);
-		int result = -1;
-		for (int j = 0; j < str.length(); j++)
-		{
-			if (str.charAt(j) == '+')
-			{
-				result = Integer.parseInt(str.substring(0, j)) + Integer.parseInt(str.substring(j + 1, str.length()));
-				return result;
-			}
-			if (str.charAt(j) == '-')
-			{
-				result = Integer.parseInt(str.substring(0, j)) - Integer.parseInt(str.substring(j + 1, str.length()));
-				return result;
+	public double result(String questionStr) {
+		String str = questionStr.replace(" ", "");
+		String left = null;
+		String right = null;
+		double result = -1;
+		int signIdx = 0;
+
+		for (int i = 0; i < this.signs.length; i++) {
+			if(str.contains(signs[i])) {
+				signIdx = i;
+				left = str.substring(0, str.indexOf(""+signs[i].charAt(0)));
+				right = str.substring(str.indexOf(""+signs[i].charAt(0)) + 1, str.length());
+				break;
 			}
 		}
+
+		switch(signIdx) {
+			case 0:
+				result = Integer.parseInt(left) + Integer.parseInt(right);
+				break;
+			case 1:
+				result = Integer.parseInt(left) - Integer.parseInt(right);
+				break;
+			case 2:
+				result = Integer.parseInt(left) * Integer.parseInt(right);
+				break;
+			case 3:
+				result = (double)Integer.parseInt(left) / Integer.parseInt(right);
+		}
+
 		return result;
 	}
 	
-	public boolean filter(String paramString)
-	{
-		for (int i = 0; i < paramString.length(); i++) {
-			if ((!Character.isDigit(paramString.charAt(i))) && (paramString.charAt(i) != '-')) {
+	public boolean filter(String input) {
+		for (int i = 0; i < input.length(); i++) {
+			if ((!Character.isDigit(input.charAt(i))) && (input.charAt(i) != '-')) {
 				return true;
 			}
 		}
